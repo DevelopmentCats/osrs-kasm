@@ -1,0 +1,203 @@
+name: Build and Push OSRS Runelite Kasm
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC to check for new Runelite releases
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - '.github/workflows/build-and-push.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.version-check.outputs.should-build }}
+      runelite-version: ${{ steps.version-check.outputs.runelite-version }}
+      runelite-tag: ${{ steps.version-check.outputs.runelite-tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Runelite version
+        id: version-check
+        run: |
+          # Get latest Runelite release version from GitHub API
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/runelite/launcher/releases/latest)
+          RUNELITE_VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
+          RUNELITE_TAG=$(echo "$RUNELITE_VERSION" | sed 's/^v//')
+          
+          echo "Latest Runelite version: $RUNELITE_VERSION"
+          echo "runelite-version=$RUNELITE_VERSION" >> $GITHUB_OUTPUT
+          echo "runelite-tag=$RUNELITE_TAG" >> $GITHUB_OUTPUT
+          
+          # Check if we already have this version built
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          # Check if image with this tag exists in GHCR
+          IMAGE_EXISTS=$(curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://ghcr.io/v2/$REPO_LOWER/tags/list" | \
+            jq -r --arg tag "$RUNELITE_TAG" '.tags // [] | contains([$tag])')
+          
+          if [ "$IMAGE_EXISTS" = "true" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ] && [ "${{ github.event_name }}" != "push" ]; then
+            echo "Image for version $RUNELITE_TAG already exists, skipping build"
+            echo "should-build=false" >> $GITHUB_OUTPUT
+          else
+            echo "New version detected or manual trigger, proceeding with build"
+            echo "should-build=true" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-push:
+    needs: check-version
+    if: needs.check-version.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ needs.check-version.outputs.runelite-tag }}
+            type=raw,value=${{ needs.check-version.outputs.runelite-version }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            RUNELITE_VERSION=${{ needs.check-version.outputs.runelite-version }}
+
+      - name: Generate build summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runelite Version**: ${{ needs.check-version.outputs.runelite-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tags**: " >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" | sed 's/^/  - /' >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Digest**: ${{ steps.build.outputs.digest }}" >> $GITHUB_STEP_SUMMARY
+
+  notify-failure:
+    needs: [check-version, build-and-push]
+    if: failure() && needs.check-version.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Build failed for Runelite version ${{ needs.check-version.outputs.runelite-version || 'unknown' }}`;
+            const body = `
+            ## Build Failure Report
+            
+            The automated build for OSRS Runelite Kasm workspace has failed.
+            
+            **Details:**
+            - **Runelite Version**: ${{ needs.check-version.outputs.runelite-version || 'unknown' }}
+            - **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - **Triggered by**: ${{ github.event_name }}
+            - **Branch**: ${{ github.ref_name }}
+            
+            Please check the workflow logs and fix any issues.
+            
+            This issue was automatically created by the build workflow.
+            `;
+            
+            // Check if there's already an open issue for build failures
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'build-failure,automated'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['build-failure', 'automated', 'bug']
+              });
+            } else {
+              // Update existing issue with new failure info
+              const existingIssue = issues.data[0];
+              const updateBody = `${existingIssue.body}\n\n---\n\n**New Failure**: ${new Date().toISOString()}\n${body}`;
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: updateBody
+              });
+            }
+  no
+tify-success:
+    needs: [check-version, build-and-push]
+    if: success() && needs.check-version.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close existing failure issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Close any open build failure issues since this build succeeded
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'build-failure,automated'
+            });
+            
+            for (const issue of issues.data) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ Build is now working again. Runelite version ${{ needs.check-version.outputs.runelite-version }} built successfully.\n\nWorkflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+            }
+
+      - name: Generate success summary
+        run: |
+          echo "## ✅ Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "Successfully built and pushed OSRS Runelite Kasm workspace for version ${{ needs.check-version.outputs.runelite-version }}" >> $GITHUB_STEP_SUMMARY
