@@ -163,8 +163,7 @@ jobs:
                 body: updateBody
               });
             }
-  no
-tify-success:
+  notify-success:
     needs: [check-version, build-and-push]
     if: success() && needs.check-version.outputs.should-build == 'true'
     runs-on: ubuntu-latest
