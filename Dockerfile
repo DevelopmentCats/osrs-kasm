@@ -174,8 +174,6 @@ EOF
 
 RUN mkdir -p /etc/xdg/autostart
 
-RUN mkdir -p /opt/jagex
-
 RUN cat > /etc/xdg/autostart/osrs-app.desktop << 'EOF'
 [Desktop Entry]
 Name=Old School RuneScape
