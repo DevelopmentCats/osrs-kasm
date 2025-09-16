@@ -46,53 +46,17 @@ RUN mkdir -p /opt/runelite \
 RUN cat > /opt/runelite/runelite-fullscreen.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
-export PULSE_AUDIO=unix
-export _JAVA_OPTIONS=""
+export _JAVA_OPTIONS="-Xms512m -Xmx4096m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Dsun.java2d.opengl=true -Dsun.java2d.xrender=true -server"
 
-JAVA_OPTS=(
-    "-Xms512m"
-    "-Xmx4096m"
-    "-XX:NewRatio=2"
-    "-XX:SurvivorRatio=8"
-    "-XX:+UseG1GC"
-    "-XX:MaxGCPauseMillis=25"
-    "-XX:G1HeapRegionSize=16m"
-    "-XX:G1ReservePercent=20"
-    "-XX:+G1UseAdaptiveIHOP"
-    "-XX:G1HeapWastePercent=5"
-    "-XX:+UseCompressedOops"
-    "-XX:+AggressiveOpts"
-    "-XX:+OptimizeStringConcat"
-    "-XX:CompileThreshold=1500"
-    "-Dsun.java2d.opengl=true"
-    "-Dsun.java2d.pmoffscreen=false"
-    "-Dsun.java2d.xrender=true"
-    "-Dsun.java2d.d3d=false"
-    "-Djogl.disable.openglcore=false"
-    "-Djogl.disable.openglarbcontext=false"
-    "-Dawt.useSystemAAFontSettings=on"
-    "-Dswing.aatext=true"
-    "-Dsun.awt.disablegrab=true"
-    "-Dsun.awt.exception.handler=system"
-    "-server"
-    "-XX:+UseFastAccessorMethods"
-    "-XX:+UnlockExperimentalVMOptions"
-    "-XX:+UseG1GC"
-    "-XX:+ParallelRefProcEnabled"
-)
-
-sleep 2
-java "${JAVA_OPTS[@]}" -jar /opt/runelite/RuneLite.jar &
+sleep 3
+java -jar /opt/runelite/RuneLite.jar &
 RUNELITE_PID=$!
-sleep 5
 
-for i in {1..10}; do
+sleep 4
+for i in {1..5}; do
     WINDOW_ID=$(wmctrl -l | grep -i "runelite\|oldschool" | head -1 | awk '{print $1}')
     if [ ! -z "$WINDOW_ID" ]; then
-        wmctrl -i -r "$WINDOW_ID" -b remove,maximized_vert,maximized_horz
         wmctrl -i -r "$WINDOW_ID" -b add,fullscreen
-        xdotool windowactivate "$WINDOW_ID"
-        xdotool key F11 2>/dev/null || true
         break
     fi
     sleep 1
@@ -189,39 +153,15 @@ EOF
 
 RUN mkdir -p /etc/xdg/autostart
 
-RUN cat > /etc/xdg/autostart/gaming-optimizations.desktop << 'EOF'
+RUN cat > /etc/xdg/autostart/runelite-autostart.desktop << 'EOF'
 [Desktop Entry]
-Name=Gaming Optimizations
-Comment=Apply system optimizations for gaming performance
-Exec=/opt/runelite/performance-setup.sh
+Name=RuneLite
+Comment=Auto-launch RuneLite in fullscreen
+Exec=/opt/runelite/runelite-fullscreen.sh
 Terminal=false
 Type=Application
-Categories=System;
+Categories=Game;
 EOF
-
-RUN cat > /opt/runelite/performance-setup.sh << 'EOF'
-#!/bin/bash
-for device in /sys/block/*/queue/scheduler; do
-    if [ -w "$device" ]; then
-        echo 'deadline' > "$device" 2>/dev/null || true
-    fi
-done
-
-sysctl -w net.core.rmem_max=134217728 >/dev/null 2>&1 || true
-sysctl -w net.core.wmem_max=134217728 >/dev/null 2>&1 || true
-sysctl -w net.ipv4.tcp_rmem="4096 87380 134217728" >/dev/null 2>&1 || true
-sysctl -w net.ipv4.tcp_wmem="4096 65536 134217728" >/dev/null 2>&1 || true
-
-xset -dpms >/dev/null 2>&1 || true
-xset s off >/dev/null 2>&1 || true
-xset s noblank >/dev/null 2>&1 || true
-
-unclutter -display :1 -idle 3 -root &
-
-(sleep 8 && /opt/runelite/runelite-fullscreen.sh) &
-EOF
-
-RUN chmod +x /opt/runelite/performance-setup.sh
 
 RUN echo "[Desktop Entry]" > $HOME/Desktop/RuneLite.desktop \
     && echo "Version=1.0" >> $HOME/Desktop/RuneLite.desktop \
@@ -236,11 +176,12 @@ RUN echo "[Desktop Entry]" > $HOME/Desktop/RuneLite.desktop \
 
 RUN echo '#!/bin/bash' > $STARTUPDIR/custom_startup.sh \
     && echo '/usr/bin/desktop_ready' >> $STARTUPDIR/custom_startup.sh \
-    && echo '/opt/runelite/performance-setup.sh &' >> $STARTUPDIR/custom_startup.sh \
     && echo 'export LIBGL_ALWAYS_SOFTWARE=0' >> $STARTUPDIR/custom_startup.sh \
     && echo 'export LIBGL_ALWAYS_INDIRECT=0' >> $STARTUPDIR/custom_startup.sh \
     && echo 'export MESA_GL_VERSION_OVERRIDE=3.3' >> $STARTUPDIR/custom_startup.sh \
     && echo 'export MESA_GLSL_VERSION_OVERRIDE=330' >> $STARTUPDIR/custom_startup.sh \
+    && echo 'xset -dpms s off s noblank &' >> $STARTUPDIR/custom_startup.sh \
+    && echo 'unclutter -display :1 -idle 3 -root &' >> $STARTUPDIR/custom_startup.sh \
     && chmod +x $STARTUPDIR/custom_startup.sh
 
 RUN chown 1000:0 $HOME && $STARTUPDIR/set_user_permission.sh $HOME
