@@ -35,6 +35,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fontconfig \
     wget \
     curl \
+    gnupg2 \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget -O - https://content.runescape.com/downloads/ubuntu/runescape.gpg.key | apt-key add - \
+    && mkdir -p /etc/apt/sources.list.d \
+    && echo "deb https://content.runescape.com/downloads/ubuntu trusty non-free" > /etc/apt/sources.list.d/runescape.list \
+    && apt-get update \
+    && apt-get install -y runescape-launcher \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo 'deadline' > /sys/block/*/queue/scheduler 2>/dev/null || true
@@ -43,27 +52,38 @@ RUN mkdir -p /opt/runelite \
     && wget -O /opt/runelite/RuneLite.jar \
        https://github.com/runelite/launcher/releases/latest/download/RuneLite.jar
 
-RUN cat > /opt/runelite/runelite-fullscreen.sh << 'EOF'
+RUN cat > /opt/jagex/osrs-launcher.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
 
-xfconf-query -c xfce4-panel -p /panels/panel-1/autohide -s true
-xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0
+xfconf-query -c xfce4-panel -p /panels/panel-1/autohide -s true 2>/dev/null || true
+xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 
-sleep 2
-java -Xms512m -Xmx4096m -jar /opt/runelite/RuneLite.jar &
-RUNELITE_PID=$!
+{
+    while true; do
+        GAME_WINDOW=$(wmctrl -l | grep -i -E "runelite|oldschool|old school" | head -1)
+        
+        if [[ -n "$GAME_WINDOW" ]]; then
+            WINDOW_ID=$(echo "$GAME_WINDOW" | awk '{print $1}')
+            
+            GEOMETRY=$(xwininfo -id "$WINDOW_ID" 2>/dev/null | grep -E "Width:|Height:")
+            WIDTH=$(echo "$GEOMETRY" | grep "Width:" | awk '{print $2}')
+            HEIGHT=$(echo "$GEOMETRY" | grep "Height:" | awk '{print $2}')
+            
+            if [[ "$WIDTH" -gt 700 && "$HEIGHT" -gt 500 ]]; then
+                wmctrl -i -r "$WINDOW_ID" -b add,maximized_vert,maximized_horz
+                sleep 5
+            fi
+        fi
+        
+        sleep 2
+    done
+} &
 
-sleep 3
-WINDOW_ID=$(wmctrl -l | grep -i "runelite\|oldschool" | head -1 | awk '{print $1}')
-if [ ! -z "$WINDOW_ID" ]; then
-    wmctrl -i -r "$WINDOW_ID" -b add,maximized_vert,maximized_horz
-fi
-
-wait $RUNELITE_PID
+/usr/games/runescape-launcher
 EOF
 
-RUN chmod +x /opt/runelite/runelite-fullscreen.sh
+RUN chmod +x /opt/jagex/osrs-launcher.sh
 
 RUN mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
 
@@ -151,28 +171,20 @@ EOF
 
 RUN mkdir -p /etc/xdg/autostart
 
-RUN cat > /etc/xdg/autostart/runelite-autostart.desktop << 'EOF'
+RUN mkdir -p /opt/jagex
+
+RUN cat > /etc/xdg/autostart/osrs-app.desktop << 'EOF'
 [Desktop Entry]
-Name=RuneLite
-Comment=Auto-launch RuneLite in fullscreen
-Exec=/opt/runelite/runelite-fullscreen.sh
+Name=Old School RuneScape
+Comment=Launch OSRS via Jagex Launcher
+Exec=/opt/jagex/osrs-launcher.sh
 Terminal=false
 Type=Application
 Categories=Game;
+StartupNotify=false
 EOF
 
-RUN chmod 644 /etc/xdg/autostart/runelite-autostart.desktop
-
-RUN echo "[Desktop Entry]" > $HOME/Desktop/RuneLite.desktop \
-    && echo "Version=1.0" >> $HOME/Desktop/RuneLite.desktop \
-    && echo "Type=Application" >> $HOME/Desktop/RuneLite.desktop \
-    && echo "Name=RuneLite Fullscreen" >> $HOME/Desktop/RuneLite.desktop \
-    && echo "Comment=OSRS RuneLite Client (Performance Optimized)" >> $HOME/Desktop/RuneLite.desktop \
-    && echo "Exec=/opt/runelite/runelite-fullscreen.sh" >> $HOME/Desktop/RuneLite.desktop \
-    && echo "Icon=applications-games" >> $HOME/Desktop/RuneLite.desktop \
-    && echo "Terminal=false" >> $HOME/Desktop/RuneLite.desktop \
-    && echo "Categories=Game;" >> $HOME/Desktop/RuneLite.desktop \
-    && chmod +x $HOME/Desktop/RuneLite.desktop
+RUN chmod 644 /etc/xdg/autostart/osrs-app.desktop
 
 RUN echo '#!/bin/bash' > $STARTUPDIR/custom_startup.sh \
     && echo '/usr/bin/desktop_ready' >> $STARTUPDIR/custom_startup.sh \

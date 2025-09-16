@@ -1,7 +1,7 @@
 {
-  "friendly_name": "OSRS Runelite",
-  "name": "developmentcats/osrs-runelite-kasm",
-  "description": "Old School RuneScape Runelite client in a containerized Kasm workspace. Access the popular OSRS third-party client through your web browser with persistent configuration support.",
+  "friendly_name": "Old School RuneScape",
+  "name": "developmentcats/osrs-kasm",
+  "description": "Launch Old School RuneScape directly through your browser. App-like experience with Jagex Launcher integration, automatic authentication, smart fullscreen detection, and support for RuneLite and official OSRS clients.",
   "image_src": "osrs_runelite.png",
   "architecture": [
     "amd64",
@@ -12,12 +12,12 @@
     "1.14.x",
     "1.15.x"
   ],
-  "uncompressed_size_mb": 850,
+  "uncompressed_size_mb": 950,
   "categories": [
     "Gaming"
   ],
   "docker_registry": "https://index.docker.io/v1/",
-  "image": "ghcr.io/developmentcats/osrs-runelite-kasm:latest",
+  "image": "ghcr.io/developmentcats/osrs-kasm:latest",
   "run_config": {
     "hostname": "kasm",
     "environment": {
@@ -27,7 +27,7 @@
       "6901": "6901"
     },
     "labels": {
-      "com.kasm.image": "osrs-runelite-kasm"
+      "com.kasm.image": "osrs-kasm"
     }
   },
   "exec_config": {
@@ -42,5 +42,5 @@
       "cmd": "bash -c '/dockerstartup/vnc_startup.sh /dockerstartup/kasm_startup.sh'"
     }
   },
-  "notes": "OSRS Runelite client workspace. Mount /home/kasm-user/.runelite for persistent settings. Java-based client with full game functionality including plugins and customization options."
+  "notes": "OSRS app experience - launches directly into Jagex Launcher (no desktop clutter). Smart window management auto-fullscreens game clients while ignoring patcher windows. Mount /home/kasm-user/.runelite and /home/kasm-user/.jagex for persistent game settings. Supports RuneLite, official OSRS client, and other Jagex games with performance optimizations."
 }
