@@ -46,7 +46,7 @@ RUN wget -O - https://content.runescape.com/downloads/ubuntu/runescape.gpg.key |
     && mkdir -p /etc/apt/sources.list.d \
     && echo "deb https://content.runescape.com/downloads/ubuntu trusty non-free" > /etc/apt/sources.list.d/runescape.list \
     && apt-get update \
-    && apt-get install -y runescape \
+    && apt-get install -y runescape-launcher \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo 'deadline' > /sys/block/*/queue/scheduler 2>/dev/null || true
@@ -84,7 +84,7 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
     done
 } &
 
-runescape
+runescape-launcher
 EOF
 
 RUN chmod +x /opt/jagex/osrs-launcher.sh
