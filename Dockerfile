@@ -163,6 +163,8 @@ Type=Application
 Categories=Game;
 EOF
 
+RUN chmod 644 /etc/xdg/autostart/runelite-autostart.desktop
+
 RUN echo "[Desktop Entry]" > $HOME/Desktop/RuneLite.desktop \
     && echo "Version=1.0" >> $HOME/Desktop/RuneLite.desktop \
     && echo "Type=Application" >> $HOME/Desktop/RuneLite.desktop \
