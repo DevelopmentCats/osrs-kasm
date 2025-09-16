@@ -8,12 +8,12 @@ WORKDIR $HOME
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-11-jre \
     openjdk-11-jre-headless \
-    libgl1-mesa-glx \
+    libgl1-mesa-dev \
     libgl1-mesa-dri \
     mesa-utils \
     mesa-va-drivers \
     mesa-vdpau-drivers \
-    libegl1-mesa \
+    libegl1-mesa-dev \
     libxrender1 \
     libxtst6 \
     libxi6 \
@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxxf86vm1 \
     libxkbfile1 \
     libxss1 \
-    libasound2 \
+    libasound2t64 \
     pulseaudio-utils \
     unclutter \
     xdotool \
