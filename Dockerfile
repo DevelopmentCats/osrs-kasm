@@ -46,21 +46,19 @@ RUN mkdir -p /opt/runelite \
 RUN cat > /opt/runelite/runelite-fullscreen.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
-export _JAVA_OPTIONS="-Xms512m -Xmx4096m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Dsun.java2d.opengl=true -Dsun.java2d.xrender=true"
 
-sleep 3
-java -jar /opt/runelite/RuneLite.jar &
+xfconf-query -c xfce4-panel -p /panels/panel-1/autohide -s true
+xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0
+
+sleep 2
+java -Xms512m -Xmx4096m -jar /opt/runelite/RuneLite.jar &
 RUNELITE_PID=$!
 
-sleep 4
-for i in {1..5}; do
-    WINDOW_ID=$(wmctrl -l | grep -i "runelite\|oldschool" | head -1 | awk '{print $1}')
-    if [ ! -z "$WINDOW_ID" ]; then
-        wmctrl -i -r "$WINDOW_ID" -b add,fullscreen
-        break
-    fi
-    sleep 1
-done
+sleep 3
+WINDOW_ID=$(wmctrl -l | grep -i "runelite\|oldschool" | head -1 | awk '{print $1}')
+if [ ! -z "$WINDOW_ID" ]; then
+    wmctrl -i -r "$WINDOW_ID" -b add,maximized_vert,maximized_horz
+fi
 
 wait $RUNELITE_PID
 EOF
