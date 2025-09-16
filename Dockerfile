@@ -37,13 +37,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg2 \
     software-properties-common \
+    && wget -O libssl1.1.deb http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb \
+    && dpkg -i libssl1.1.deb \
+    && rm libssl1.1.deb \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget -O - https://content.runescape.com/downloads/ubuntu/runescape.gpg.key | apt-key add - \
     && mkdir -p /etc/apt/sources.list.d \
     && echo "deb https://content.runescape.com/downloads/ubuntu trusty non-free" > /etc/apt/sources.list.d/runescape.list \
     && apt-get update \
-    && apt-get install -y runescape-launcher \
+    && apt-get install -y runescape \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo 'deadline' > /sys/block/*/queue/scheduler 2>/dev/null || true
@@ -80,7 +83,7 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
     done
 } &
 
-/usr/games/runescape-launcher
+runescape
 EOF
 
 RUN chmod +x /opt/jagex/osrs-launcher.sh
