@@ -61,6 +61,8 @@ RUN mkdir -p /opt/jagex \
 #!/bin/bash
 export DISPLAY=:1
 
+mkdir -p "$HOME/.jagex_cache_32" "$HOME/.jagex" "$HOME/.jagex/cache" "$HOME/.runelite"
+
 xfconf-query -c xfce4-panel -p /panels/panel-1/autohide -s true 2>/dev/null || true
 xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 
@@ -84,6 +86,8 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
         sleep 2
     done
 } &
+
+export JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true"
 
 runescape-launcher
 EOF
