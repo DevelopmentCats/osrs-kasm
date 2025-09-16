@@ -55,7 +55,8 @@ RUN mkdir -p /opt/runelite \
     && wget -O /opt/runelite/RuneLite.jar \
        https://github.com/runelite/launcher/releases/latest/download/RuneLite.jar
 
-RUN cat > /opt/jagex/osrs-launcher.sh << 'EOF'
+RUN mkdir -p /opt/jagex \
+    && cat > /opt/jagex/osrs-launcher.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
 
