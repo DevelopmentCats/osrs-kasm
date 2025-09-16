@@ -46,7 +46,7 @@ RUN mkdir -p /opt/runelite \
 RUN cat > /opt/runelite/runelite-fullscreen.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
-export _JAVA_OPTIONS="-Xms512m -Xmx4096m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Dsun.java2d.opengl=true -Dsun.java2d.xrender=true -server"
+export _JAVA_OPTIONS="-Xms512m -Xmx4096m -XX:+UseG1GC -XX:MaxGCPauseMillis=25 -Dsun.java2d.opengl=true -Dsun.java2d.xrender=true"
 
 sleep 3
 java -jar /opt/runelite/RuneLite.jar &
