@@ -37,9 +37,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg2 \
     software-properties-common \
-    && wget -O libssl1.1.deb http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb \
-    && dpkg -i libssl1.1.deb \
-    && rm libssl1.1.deb \
+    && echo "deb http://security.ubuntu.com/ubuntu focal-security main" > /etc/apt/sources.list.d/libssl1_1.list \
+    && apt-get update \
+    && apt-get install -y libssl1.1 \
+    && rm /etc/apt/sources.list.d/libssl1_1.list \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget -O - https://content.runescape.com/downloads/ubuntu/runescape.gpg.key | apt-key add - \
