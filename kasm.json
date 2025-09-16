@@ -1,7 +1,7 @@
 {
   "friendly_name": "Old School RuneScape",
   "name": "developmentcats/osrs-kasm",
-  "description": "Launch Old School RuneScape directly through your browser. App-like experience with Jagex Launcher integration, automatic authentication, smart fullscreen detection, and support for RuneLite and official OSRS clients.",
+  "description": "Launch Old School RuneScape directly through your browser using Bolt Launcher. App-like experience with automatic authentication, smart fullscreen detection, and support for RuneLite, OSRS, HDOS, and other clients.",
   "image_src": "osrs_runelite.png",
   "architecture": [
     "amd64",
@@ -12,7 +12,7 @@
     "1.14.x",
     "1.15.x"
   ],
-  "uncompressed_size_mb": 950,
+  "uncompressed_size_mb": 850,
   "categories": [
     "Gaming"
   ],
@@ -42,5 +42,5 @@
       "cmd": "bash -c '/dockerstartup/vnc_startup.sh /dockerstartup/kasm_startup.sh'"
     }
   },
-  "notes": "OSRS app experience - launches directly into Jagex Launcher (no desktop clutter). Smart window management auto-fullscreens game clients while ignoring patcher windows. Mount /home/kasm-user/.runelite and /home/kasm-user/.jagex for persistent game settings. Supports RuneLite, official OSRS client, and other Jagex games with performance optimizations."
+  "notes": "OSRS app experience using Bolt Launcher with smart window management that auto-fullscreens game clients. Supports RuneLite, OSRS, HDOS, and other clients. Mount /home/kasm-user/.runelite, /home/kasm-user/.jagex, and /home/kasm-user/.var/app/com.adamcake.Bolt for persistent settings."
 }

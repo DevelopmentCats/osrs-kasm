@@ -35,29 +35,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fontconfig \
     wget \
     curl \
-    gnupg2 \
-    software-properties-common \
-    && echo "deb http://security.ubuntu.com/ubuntu focal-security main" > /etc/apt/sources.list.d/libssl1_1.list \
-    && apt-get update \
-    && apt-get install -y libssl1.1 \
-    && rm /etc/apt/sources.list.d/libssl1_1.list \
+    flatpak \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget -O - https://content.runescape.com/downloads/ubuntu/runescape.gpg.key | apt-key add - \
-    && mkdir -p /etc/apt/sources.list.d \
-    && echo "deb https://content.runescape.com/downloads/ubuntu trusty non-free" > /etc/apt/sources.list.d/runescape.list \
-    && apt-get update \
-    && apt-get install -y runescape-launcher \
-    && rm -rf /var/lib/apt/lists/*
+RUN flatpak remote-add --system flathub https://flathub.org/repo/flathub.flatpakrepo \
+    && flatpak install -y --system flathub com.adamcake.Bolt
 
 RUN echo 'deadline' > /sys/block/*/queue/scheduler 2>/dev/null || true
 
-RUN mkdir -p /opt/runelite \
-    && wget -O /opt/runelite/RuneLite.jar \
-       https://github.com/runelite/launcher/releases/latest/download/RuneLite.jar
-
-RUN mkdir -p /opt/jagex \
-    && cat > /opt/jagex/osrs-launcher.sh << 'EOF'
+RUN mkdir -p /opt/bolt \
+    && cat > /opt/bolt/osrs-launcher.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
 
@@ -68,7 +55,7 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 
 {
     while true; do
-        GAME_WINDOW=$(wmctrl -l | grep -i -E "runelite|oldschool|old school" | head -1)
+        GAME_WINDOW=$(wmctrl -l | grep -i -E "runelite|oldschool|old school|bolt" | head -1)
         
         if [[ -n "$GAME_WINDOW" ]]; then
             WINDOW_ID=$(echo "$GAME_WINDOW" | awk '{print $1}')
@@ -89,10 +76,10 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 
 export JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true"
 
-runescape-launcher
+flatpak run com.adamcake.Bolt --no-sandbox
 EOF
 
-RUN chmod +x /opt/jagex/osrs-launcher.sh
+RUN chmod +x /opt/bolt/osrs-launcher.sh
 
 RUN mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
 
@@ -179,12 +166,11 @@ RUN cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml << 'EOF'
 EOF
 
 RUN mkdir -p /etc/xdg/autostart
-
 RUN cat > /etc/xdg/autostart/osrs-app.desktop << 'EOF'
 [Desktop Entry]
 Name=Old School RuneScape
-Comment=Launch OSRS via Jagex Launcher
-Exec=/opt/jagex/osrs-launcher.sh
+Comment=Launch OSRS via Bolt Launcher
+Exec=/opt/bolt/osrs-launcher.sh
 Terminal=false
 Type=Application
 Categories=Game;

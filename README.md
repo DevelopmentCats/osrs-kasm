@@ -1,6 +1,6 @@
 # Old School RuneScape - Kasm App
 
-Launch Old School RuneScape directly through your browser via Jagex Launcher. Clean, app-like experience with automatic authentication and fullscreen gaming.
+Launch Old School RuneScape directly through your browser via Bolt Launcher. Clean, app-like experience with automatic authentication and fullscreen gaming.
 
 ## Quick Start
 
@@ -15,11 +15,11 @@ docker run -d \
 
 Access at: `http://localhost:6901`
 
-**Simple Workflow:**
-1. Container launches directly into Jagex Launcher
+**Workflow:**
+1. Container launches directly into Bolt Launcher
 2. Login with your Jagex account credentials
-3. Select your preferred client (RuneLite/OSRS)
-4. Game automatically goes fullscreen - start playing!
+3. Select your preferred client (RuneLite, OSRS, HDOS, etc.)
+4. Game automatically goes fullscreen
 
 ## Docker Compose
 
@@ -34,14 +34,13 @@ services:
     volumes:
       - ./runelite-config:/home/kasm-user/.runelite
       - ./jagex-config:/home/kasm-user/.jagex
+      - ./bolt-config:/home/kasm-user/.var/app/com.adamcake.Bolt
     mem_limit: 5g
     shm_size: 1g
     restart: unless-stopped
 ```
 
-## Performance Mode (Optional)
-
-For enhanced performance with network/I/O optimizations:
+## Performance Mode
 
 ```bash
 docker run -d \
@@ -55,46 +54,50 @@ docker run -d \
 
 ## Features
 
-- **🎮 App-Like Experience** - Launches directly into OSRS, not a desktop environment
-- **🚀 Official Authentication** - Uses Jagex Launcher for secure account access
-- **🔄 Multi-Client Support** - Choose RuneLite, official OSRS client, or others
-- **🖥️ Smart Fullscreen** - Automatically maximizes game (ignores small patcher windows)
-- **⚡ Gaming Optimized** - GPU acceleration, performance tuning, clean interface
-- **💾 Persistent Settings** - Your game settings and launcher preferences are saved
+- App-like experience launching directly into OSRS
+- Native Linux launcher via Bolt
+- Official Jagex account compatibility
+- Multi-client support (RuneLite, OSRS, HDOS)
+- Smart fullscreen detection
+- Gaming performance optimizations
+- Persistent settings
 
 ## Memory Usage
 
-RuneLite uses **dynamic memory allocation**:
-- **Basic usage**: ~1-2GB (vanilla client)
-- **With plugins**: ~2-4GB (GPU, HD, utilities)
-- **Heavy plugins**: ~4-5GB (multiple HD plugins)
-
-The container allocates memory as needed rather than consuming it all upfront.
+- Basic usage: ~1-2GB (vanilla client)
+- With plugins: ~2-4GB (GPU, HD, utilities)
+- Heavy plugins: ~4-5GB (multiple HD plugins)
 
 ## System Requirements
 
-- **RAM**: 5GB container limit (uses 1-4GB dynamically)
-- **CPU**: 2+ cores recommended for smooth plugin performance
-- **GPU**: Modern GPU with OpenGL 4.3+ for GPU plugin
+- RAM: 5GB container limit (uses 1-4GB dynamically)
+- CPU: 2+ cores recommended
+- GPU: Modern GPU with OpenGL 4.3+ for GPU plugin
+- Internet: Required for authentication
 
-## How It Works
+## Volume Mounts
 
-This container provides a clean, app-focused OSRS experience:
-
-1. **Direct Launch** - Container starts immediately with Jagex Launcher (no desktop clutter)
-2. **Authentication** - Login with your Jagex account for official access
-3. **Client Selection** - Choose your preferred OSRS client in the launcher
-4. **Auto-Gaming Mode** - Game windows automatically go fullscreen for immersive play
-5. **Background Management** - System handles technical details (window sizing, performance) automatically
+```bash
+-v ./runelite-config:/home/kasm-user/.runelite
+-v ./jagex-config:/home/kasm-user/.jagex
+-v ./bolt-config:/home/kasm-user/.var/app/com.adamcake.Bolt
+```
 
 ## Troubleshooting
 
-**Container not loading**: Ensure port 6901 is accessible
-**Jagex Launcher issues**: Verify internet connectivity
-**Game not fullscreen**: Wait a few seconds for auto-detection
-**Performance**: Increase memory to 6GB for heavy plugin usage
+**Container not loading**: Ensure port 6901 is accessible  
+**Bolt Launcher issues**: Verify internet connectivity  
+**Game not fullscreen**: Wait a few seconds for auto-detection  
+**Performance**: Increase memory to 6GB for heavy plugins  
 **Logs**: `docker logs osrs-kasm`
+
+## Supported Clients
+
+- RuneLite
+- Official OSRS
+- HDOS
+- Other Jagex-compatible clients
 
 ## Disclaimer
 
-Not affiliated with Jagex Ltd. RuneLite is a third-party client. Users responsible for ToS compliance.
+Uses Bolt Launcher (third-party software by [Adamcake](https://github.com/Adamcake/Bolt)) and RuneLite. Not affiliated with Jagex Ltd. Users responsible for ToS compliance.
