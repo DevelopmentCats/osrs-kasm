@@ -53,9 +53,14 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 
 {
     while true; do
+        # Maximize Bolt Launcher
         wmctrl -r "Bolt Launcher" -b add,maximized_vert,maximized_horz 2>/dev/null
         
-        wmctrl -r "RuneLite" -b add,maximized_vert,maximized_horz 2>/dev/null
+        # Maximize only the exact "RuneLite" window (not "RuneLite Launcher")
+        RUNELITE_WINDOW=$(wmctrl -l | grep " RuneLite$" | head -1 | awk '{print $1}')
+        if [[ -n "$RUNELITE_WINDOW" ]]; then
+            wmctrl -i -r "$RUNELITE_WINDOW" -b add,maximized_vert,maximized_horz 2>/dev/null
+        fi
         
         sleep 2
     done
