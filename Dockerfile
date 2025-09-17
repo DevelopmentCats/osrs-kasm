@@ -26,6 +26,13 @@ RUN mkdir -p /opt/bolt \
     && cat > /opt/bolt/osrs-launcher.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
+export XDG_RUNTIME_DIR="/tmp/runtime-$(whoami)"
+export XAUTHORITY="$HOME/.Xauthority"
+
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+xhost +local: 2>/dev/null || true
 
 BOLT_PATH=$(find /var/lib/flatpak/app/com.adamcake.Bolt -name "bolt-launcher" -type d 2>/dev/null | head -1)
 if [[ -z "$BOLT_PATH" ]]; then
@@ -66,7 +73,7 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 } &
 
 export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
-export JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true -Djava.awt.headless=false -Dsun.java2d.opengl=true -Dsun.java2d.xrender=true"
+export JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true -Djava.awt.headless=false"
 
 echo "Starting Bolt from: $BOLT_PATH"
 cd "$BOLT_PATH"
