@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-11-jdk \
     libgl1-mesa-dev \
     libgl1-mesa-dri \
+    libgl1-mesa-glx \
     mesa-utils \
     mesa-va-drivers \
     mesa-vdpau-drivers \
@@ -26,6 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxxf86vm1 \
     libxkbfile1 \
     libxss1 \
+    libxext6 \
+    libdrm2 \
     libasound2t64 \
     pulseaudio-utils \
     unclutter \
@@ -38,17 +41,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     flatpak \
     libopenh264-7 \
     ca-certificates \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxtst6 \
-    libxxf86vm1 \
-    libdrm2 \
-    libxdamage1 \
-    libxfixes3 \
-    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
 RUN flatpak remote-add --system flathub https://flathub.org/repo/flathub.flatpakrepo \
