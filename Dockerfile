@@ -8,39 +8,13 @@ WORKDIR $HOME
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-11-jre \
     openjdk-11-jdk \
-    libgl1-mesa-dev \
-    libgl1-mesa-dri \
-    libgl1-mesa-glx \
-    mesa-utils \
-    mesa-va-drivers \
-    mesa-vdpau-drivers \
-    libegl1-mesa-dev \
-    libxrender1 \
-    libxtst6 \
-    libxi6 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libxcursor1 \
-    libxinerama1 \
-    libxxf86vm1 \
-    libxkbfile1 \
-    libxss1 \
-    libxext6 \
-    libdrm2 \
-    libasound2t64 \
-    pulseaudio-utils \
+    flatpak \
+    libopenh264-7 \
     unclutter \
     xdotool \
     wmctrl \
-    fonts-dejavu-core \
-    fontconfig \
     wget \
     curl \
-    flatpak \
-    libopenh264-7 \
-    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 RUN flatpak remote-add --system flathub https://flathub.org/repo/flathub.flatpakrepo \
