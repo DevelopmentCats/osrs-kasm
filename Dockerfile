@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     curl \
     flatpak \
-    dbus-x11 \
+    libopenh264-7 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN flatpak remote-add --system flathub https://flathub.org/repo/flathub.flatpakrepo \
@@ -48,11 +48,15 @@ RUN mkdir -p /opt/bolt \
     && cat > /opt/bolt/osrs-launcher.sh << 'EOF'
 #!/bin/bash
 export DISPLAY=:1
-export XDG_DATA_DIRS="/var/lib/flatpak/exports/share:/home/kasm-user/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
-    eval $(dbus-launch --sh-syntax)
+BOLT_PATH=$(find /var/lib/flatpak/app/com.adamcake.Bolt -name "bolt-launcher" -type d 2>/dev/null | head -1)
+if [[ -z "$BOLT_PATH" ]]; then
+    echo "Error: Bolt launcher not found"
+    exit 1
 fi
+
+BOLT_LIB_PATH=$(dirname "$BOLT_PATH")/../lib
+export LD_LIBRARY_PATH="$BOLT_LIB_PATH:$LD_LIBRARY_PATH"
 
 mkdir -p "$HOME/.jagex_cache_32" "$HOME/.jagex" "$HOME/.jagex/cache" "$HOME/.runelite"
 
@@ -84,7 +88,9 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 
 export JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true"
 
-dbus-run-session flatpak run com.adamcake.Bolt --no-sandbox
+echo "Starting Bolt from: $BOLT_PATH"
+cd "$BOLT_PATH"
+./bolt --no-sandbox
 EOF
 
 RUN chmod +x /opt/bolt/osrs-launcher.sh
@@ -193,7 +199,6 @@ RUN echo '#!/bin/bash' > $STARTUPDIR/custom_startup.sh \
     && echo 'export LIBGL_ALWAYS_INDIRECT=0' >> $STARTUPDIR/custom_startup.sh \
     && echo 'export MESA_GL_VERSION_OVERRIDE=3.3' >> $STARTUPDIR/custom_startup.sh \
     && echo 'export MESA_GLSL_VERSION_OVERRIDE=330' >> $STARTUPDIR/custom_startup.sh \
-    && echo 'export XDG_DATA_DIRS="/var/lib/flatpak/exports/share:/home/kasm-user/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"' >> $STARTUPDIR/custom_startup.sh \
     && echo 'xset -dpms s off s noblank &' >> $STARTUPDIR/custom_startup.sh \
     && echo 'unclutter -display :1 -idle 3 -root &' >> $STARTUPDIR/custom_startup.sh \
     && chmod +x $STARTUPDIR/custom_startup.sh
