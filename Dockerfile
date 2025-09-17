@@ -7,7 +7,7 @@ WORKDIR $HOME
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-11-jre \
-    openjdk-11-jre-headless \
+    openjdk-11-jdk \
     libgl1-mesa-dev \
     libgl1-mesa-dri \
     mesa-utils \
@@ -37,6 +37,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     flatpak \
     libopenh264-7 \
+    ca-certificates \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1 \
+    libxtst6 \
+    libxxf86vm1 \
+    libdrm2 \
+    libxdamage1 \
+    libxfixes3 \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
 RUN flatpak remote-add --system flathub https://flathub.org/repo/flathub.flatpakrepo \
@@ -56,7 +68,8 @@ if [[ -z "$BOLT_PATH" ]]; then
 fi
 
 BOLT_LIB_PATH=$(dirname "$BOLT_PATH")/../lib
-export LD_LIBRARY_PATH="$BOLT_LIB_PATH:$LD_LIBRARY_PATH"
+JVM_LIB_PATH="/usr/lib/jvm/java-11-openjdk-amd64/lib/server"
+export LD_LIBRARY_PATH="$BOLT_LIB_PATH:$JVM_LIB_PATH:$LD_LIBRARY_PATH"
 
 mkdir -p "$HOME/.jagex_cache_32" "$HOME/.jagex" "$HOME/.jagex/cache" "$HOME/.runelite"
 
@@ -86,11 +99,12 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
     done
 } &
 
-export JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true"
+export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
+export JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true -Djava.awt.headless=false -Dsun.java2d.opengl=true -Dsun.java2d.xrender=true"
 
 echo "Starting Bolt from: $BOLT_PATH"
 cd "$BOLT_PATH"
-./bolt --no-sandbox
+./bolt --no-sandbox 2>&1 | tee /tmp/bolt.log
 EOF
 
 RUN chmod +x /opt/bolt/osrs-launcher.sh
