@@ -53,20 +53,9 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/style -s 0 2>/dev/null || true
 
 {
     while true; do
-        GAME_WINDOW=$(wmctrl -l | grep -i -E "runelite|oldschool|old school|bolt" | head -1)
+        wmctrl -r "Bolt Launcher" -b add,maximized_vert,maximized_horz 2>/dev/null
         
-        if [[ -n "$GAME_WINDOW" ]]; then
-            WINDOW_ID=$(echo "$GAME_WINDOW" | awk '{print $1}')
-            
-            GEOMETRY=$(xwininfo -id "$WINDOW_ID" 2>/dev/null | grep -E "Width:|Height:")
-            WIDTH=$(echo "$GEOMETRY" | grep "Width:" | awk '{print $2}')
-            HEIGHT=$(echo "$GEOMETRY" | grep "Height:" | awk '{print $2}')
-            
-            if [[ "$WIDTH" -gt 700 && "$HEIGHT" -gt 500 ]]; then
-                wmctrl -i -r "$WINDOW_ID" -b add,maximized_vert,maximized_horz
-                sleep 5
-            fi
-        fi
+        wmctrl -r "RuneLite" -b add,maximized_vert,maximized_horz 2>/dev/null
         
         sleep 2
     done
